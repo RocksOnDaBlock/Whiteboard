@@ -34,6 +34,10 @@
 
         .container {
             text-align: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 0 20px;
+            box-sizing: border-box;
         }
 
         h1 {
@@ -44,6 +48,7 @@
             border-radius: 15px;
             box-shadow: 8px 8px 15px var(--shadow-color), -8px -8px 15px var(--highlight-color);
             cursor: crosshair;
+            touch-action: none;
         }
 
         .controls {
@@ -106,10 +111,37 @@
             right: 20px;
         }
 
+        .brush-size-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #brushSize {
+            width: 200px;
+            margin: 0 10px;
+        }
+
         @media (max-width: 600px) {
+            .container {
+                padding: 0 10px;
+            }
+
             #whiteboard {
-                width: 90vw;
+                width: 100%;
                 height: 60vh;
+            }
+
+            .color-option {
+                width: 25px;
+                height: 25px;
+                margin: 0 3px;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                margin: 0 5px 10px;
             }
         }
     </style>
@@ -124,7 +156,12 @@
             <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
             <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
         </div>
-        <canvas id="whiteboard" width="800" height="600"></canvas>
+        <div class="brush-size-container">
+            <span>Brush Size:</span>
+            <input type="range" id="brushSize" min="1" max="20" value="2">
+            <span id="brushSizeValue">2</span>
+        </div>
+        <canvas id="whiteboard"></canvas>
         <div class="controls">
             <button id="clearBtn" class="btn">Clear Whiteboard</button>
             <button id="saveBtn" class="btn">Save as Image</button>
@@ -139,92 +176,15 @@
         const saveBtn = document.getElementById('saveBtn');
         const colorOptions = document.querySelectorAll('.color-option');
         const darkModeToggle = document.getElementById('darkModeToggle');
+        const brushSizeInput = document.getElementById('brushSize');
+        const brushSizeValue = document.getElementById('brushSizeValue');
 
         let isDrawing = false;
         let currentColor = '#000000';
+        let currentBrushSize = 2;
+        let lastX = 0;
+        let lastY = 0;
 
-        // Set initial background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
-
-        // Drawing functionality
-        whiteboard.addEventListener('mousedown', startDrawing);
-        whiteboard.addEventListener('mousemove', draw);
-        whiteboard.addEventListener('mouseup', stopDrawing);
-        whiteboard.addEventListener('mouseout', stopDrawing);
-
-        // Touch support
-        whiteboard.addEventListener('touchstart', handleTouch);
-        whiteboard.addEventListener('touchmove', handleTouch);
-        whiteboard.addEventListener('touchend', stopDrawing);
-
-        function startDrawing(e) {
-            isDrawing = true;
-            draw(e);
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-
-            const rect = whiteboard.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = currentColor;
-
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-        }
-
-        function stopDrawing() {
-            isDrawing = false;
-            ctx.beginPath();
-        }
-
-        function handleTouch(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const mouseEvent = new MouseEvent('mousemove', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            whiteboard.dispatchEvent(mouseEvent);
-        }
-
-        // Clear whiteboard
-        clearBtn.addEventListener('click', () => {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
-        });
-
-        // Save whiteboard as image
-        saveBtn.addEventListener('click', () => {
-            const image = whiteboard.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.download = 'whiteboard.png';
-            link.href = image;
-            link.click();
-        });
-
-        // Color palette
-        colorOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                currentColor = option.getAttribute('data-color');
-                colorOptions.forEach(opt => opt.classList.remove('active'));
-                option.classList.add('active');
-            });
-        });
-
-        // Dark mode toggle
-        darkModeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-        });
-
-        // Responsive canvas size
         function resizeCanvas() {
             const container = document.querySelector('.container');
             const newWidth = Math.min(800, container.clientWidth - 40);
@@ -240,6 +200,98 @@
 
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
+
+        function startDrawing(e) {
+            isDrawing = true;
+            [lastX, lastY] = getCoordinates(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            const [x, y] = getCoordinates(e);
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = currentBrushSize;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            [lastX, lastY] = [x, y];
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function getCoordinates(e) {
+            const rect = whiteboard.getBoundingClientRect();
+            const scaleX = whiteboard.width / rect.width;
+            const scaleY = whiteboard.height / rect.height;
+
+            if (e.type.includes('touch')) {
+                return [
+                    (e.touches[0].clientX - rect.left) * scaleX,
+                    (e.touches[0].clientY - rect.top) * scaleY
+                ];
+            } else {
+                return [
+                    (e.clientX - rect.left) * scaleX,
+                    (e.clientY - rect.top) * scaleY
+                ];
+            }
+        }
+
+        whiteboard.addEventListener('mousedown', startDrawing);
+        whiteboard.addEventListener('mousemove', draw);
+        whiteboard.addEventListener('mouseup', stopDrawing);
+        whiteboard.addEventListener('mouseout', stopDrawing);
+
+        whiteboard.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startDrawing(e);
+        });
+        whiteboard.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            draw(e);
+        });
+        whiteboard.addEventListener('touchend', stopDrawing);
+
+        clearBtn.addEventListener('click', () => {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
+        });
+
+        saveBtn.addEventListener('click', () => {
+            const image = whiteboard.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'whiteboard.png';
+            link.href = image;
+            link.click();
+        });
+
+        colorOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                currentColor = option.getAttribute('data-color');
+                colorOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+            });
+        });
+
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        brushSizeInput.addEventListener('input', () => {
+            currentBrushSize = brushSizeInput.value;
+            brushSizeValue.textContent = currentBrushSize;
+        });
+
+        // Initial setup
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
     </script>
 </body>
 </html>
