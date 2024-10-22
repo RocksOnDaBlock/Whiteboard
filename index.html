@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Whiteboard</title>
+    <title>Advanced Interactive Whiteboard</title>
     <style>
         :root {
             --bg-color: #e0e5ec;
@@ -42,13 +42,17 @@
 
         h1 {
             margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px var(--shadow-color);
         }
 
         #whiteboard {
             border-radius: 15px;
-            box-shadow: 8px 8px 15px var(--shadow-color), -8px -8px 15px var(--highlight-color);
+            box-shadow: 8px 8px 15px var(--shadow-color), 
+                       -8px -8px 15px var(--highlight-color);
             cursor: crosshair;
             touch-action: none;
+            background-color: white;
         }
 
         .controls {
@@ -56,44 +60,54 @@
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
+            gap: 15px;
         }
 
         .btn {
-            padding: 10px 20px;
-            margin: 0 10px 10px;
+            padding: 12px 24px;
             border: none;
             border-radius: 50px;
             background-color: var(--bg-color);
             color: var(--text-color);
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 5px 5px 10px var(--shadow-color), -5px -5px 10px var(--highlight-color);
+            box-shadow: 5px 5px 10px var(--shadow-color),
+                       -5px -5px 10px var(--highlight-color);
+            font-weight: bold;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 7px 7px 12px var(--shadow-color), -7px -7px 12px var(--highlight-color);
+            box-shadow: 7px 7px 12px var(--shadow-color),
+                       -7px -7px 12px var(--highlight-color);
         }
 
         .btn:active {
             transform: translateY(1px);
-            box-shadow: inset 3px 3px 5px var(--shadow-color), inset -3px -3px 5px var(--highlight-color);
+            box-shadow: inset 3px 3px 5px var(--shadow-color),
+                       inset -3px -3px 5px var(--highlight-color);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .color-palette {
             display: flex;
             justify-content: center;
             margin-bottom: 20px;
+            gap: 10px;
         }
 
         .color-option {
-            width: 30px;
-            height: 30px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
-            margin: 0 5px;
             cursor: pointer;
             transition: transform 0.3s ease;
-            box-shadow: 3px 3px 5px var(--shadow-color), -3px -3px 5px var(--highlight-color);
+            box-shadow: 3px 3px 5px var(--shadow-color),
+                       -3px -3px 5px var(--highlight-color);
         }
 
         .color-option:hover {
@@ -102,11 +116,43 @@
 
         .color-option.active {
             transform: scale(1.2);
-            box-shadow: inset 2px 2px 3px var(--shadow-color), inset -2px -2px 3px var(--highlight-color);
+            box-shadow: inset 2px 2px 3px var(--shadow-color),
+                       inset -2px -2px 3px var(--highlight-color);
+        }
+
+        .tools-container {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tool-option {
+            padding: 10px 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            box-shadow: 3px 3px 7px var(--shadow-color),
+                       -3px -3px 7px var(--highlight-color);
+            font-weight: bold;
+        }
+
+        .tool-option:hover {
+            transform: translateY(-2px);
+        }
+
+        .tool-option.active {
+            transform: scale(0.95);
+            box-shadow: inset 2px 2px 5px var(--shadow-color),
+                       inset -2px -2px 5px var(--highlight-color);
+            background-color: var(--highlight-color);
         }
 
         #darkModeToggle {
-            position: absolute;
+            position: fixed;
             top: 20px;
             right: 20px;
         }
@@ -116,11 +162,38 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;
+            gap: 10px;
         }
 
         #brushSize {
             width: 200px;
-            margin: 0 10px;
+            height: 5px;
+            -webkit-appearance: none;
+            background: var(--text-color);
+            border-radius: 5px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        #brushSize:hover {
+            opacity: 1;
+        }
+
+        #brushSize::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--text-color);
+            cursor: pointer;
+            box-shadow: 0 0 5px var(--shadow-color);
+        }
+
+        #brushSizeValue {
+            min-width: 30px;
+            text-align: center;
         }
 
         @media (max-width: 600px) {
@@ -134,40 +207,58 @@
             }
 
             .color-option {
-                width: 25px;
-                height: 25px;
-                margin: 0 3px;
+                width: 30px;
+                height: 30px;
             }
 
             .btn {
+                padding: 10px 18px;
+                font-size: 0.9em;
+            }
+
+            .tool-option {
                 padding: 8px 16px;
-                margin: 0 5px 10px;
+                font-size: 0.9em;
+            }
+
+            h1 {
+                font-size: 1.8em;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Interactive Whiteboard</h1>
+        <h1>Advanced Interactive Whiteboard</h1>
         <div class="color-palette">
             <div class="color-option active" style="background-color: #000000;" data-color="#000000"></div>
             <div class="color-option" style="background-color: #ff0000;" data-color="#ff0000"></div>
             <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
             <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
             <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
+            <div class="color-option" style="background-color: #ff69b4;" data-color="#ff69b4"></div>
+            <div class="color-option" style="background-color: #800080;" data-color="#800080"></div>
+            <div class="color-option" style="background-color: #ffa500;" data-color="#ffa500"></div>
+        </div>
+        <div class="tools-container">
+            <div class="tool-option active" data-tool="brush">Brush</div>
+            <div class="tool-option" data-tool="eraser">Eraser</div>
+            <div class="tool-option" data-tool="fill">Fill</div>
         </div>
         <div class="brush-size-container">
             <span>Brush Size:</span>
-            <input type="range" id="brushSize" min="1" max="20" value="2">
+            <input type="range" id="brushSize" min="1" max="50" value="2">
             <span id="brushSizeValue">2</span>
         </div>
         <canvas id="whiteboard"></canvas>
         <div class="controls">
-            <button id="clearBtn" class="btn">Clear Whiteboard</button>
-            <button id="saveBtn" class="btn">Save as Image</button>
+            <button id="undoBtn" class="btn">⟲ Undo</button>
+            <button id="redoBtn" class="btn">⟳ Redo</button>
+            <button id="clearBtn" class="btn">Clear</button>
+            <button id="saveBtn" class="btn">Save</button>
         </div>
     </div>
-    <button id="darkModeToggle" class="btn">Toggle Dark Mode</button>
+    <button id="darkModeToggle" class="btn">🌓</button>
 
     <script>
         const whiteboard = document.getElementById('whiteboard');
@@ -178,12 +269,18 @@
         const darkModeToggle = document.getElementById('darkModeToggle');
         const brushSizeInput = document.getElementById('brushSize');
         const brushSizeValue = document.getElementById('brushSizeValue');
+        const toolOptions = document.querySelectorAll('.tool-option');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
 
         let isDrawing = false;
         let currentColor = '#000000';
         let currentBrushSize = 2;
+        let currentTool = 'brush';
         let lastX = 0;
         let lastY = 0;
+        let undoStack = [];
+        let redoStack = [];
 
         function resizeCanvas() {
             const container = document.querySelector('.container');
@@ -193,13 +290,30 @@
             whiteboard.width = newWidth;
             whiteboard.height = newHeight;
 
-            // Redraw content after resizing
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        function saveState() {
+            undoStack.push(whiteboard.toDataURL());
+            redoStack = [];
+            if (undoStack.length > 20) undoStack.shift();
+            updateUndoRedoButtons();
+        }
+
+        function updateUndoRedoButtons() {
+            undoBtn.disabled = undoStack.length === 0;
+            redoBtn.disabled = redoStack.length === 0;
+        }
+
+        function loadState(url) {
+            const img = new Image();
+            img.src = url;
+            img.onload = () => {
+                ctx.clearRect(0, 0, whiteboard.width, whiteboard.height);
+                ctx.drawImage(img, 0, 0);
+            };
+        }
 
         function startDrawing(e) {
             isDrawing = true;
@@ -214,7 +328,15 @@
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             ctx.lineTo(x, y);
-            ctx.strokeStyle = currentColor;
+
+            if (currentTool === 'eraser') {
+                ctx.strokeStyle = '#ffffff';
+                ctx.globalCompositeOperation = 'destination-out';
+            } else {
+                ctx.strokeStyle = currentColor;
+                ctx.globalCompositeOperation = 'source-over';
+            }
+
             ctx.lineWidth = currentBrushSize;
             ctx.lineCap = 'round';
             ctx.stroke();
@@ -223,7 +345,16 @@
         }
 
         function stopDrawing() {
-            isDrawing = false;
+            if (isDrawing) {
+                isDrawing = false;
+                saveState();
+            }
+        }
+
+        function fill() {
+            saveState();
+            ctx.fillStyle = currentColor;
+            ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
         }
 
         function getCoordinates(e) {
@@ -236,22 +367,34 @@
                     (e.touches[0].clientX - rect.left) * scaleX,
                     (e.touches[0].clientY - rect.top) * scaleY
                 ];
-            } else {
-                return [
-                    (e.clientX - rect.left) * scaleX,
-                    (e.clientY - rect.top) * scaleY
-                ];
             }
+            return [
+                (e.clientX - rect.left) * scaleX,
+                (e.clientY - rect.top) * scaleY
+            ];
         }
 
-        whiteboard.addEventListener('mousedown', startDrawing);
+        // Event Listeners
+        window.addEventListener('resize', resizeCanvas);
+        
+        whiteboard.addEventListener('mousedown', (e) => {
+            if (currentTool === 'fill') {
+                fill();
+            } else {
+                startDrawing(e);
+            }
+        });
         whiteboard.addEventListener('mousemove', draw);
         whiteboard.addEventListener('mouseup', stopDrawing);
         whiteboard.addEventListener('mouseout', stopDrawing);
 
         whiteboard.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            startDrawing(e);
+            if (currentTool === 'fill') {
+                fill();
+            } else {
+                startDrawing(e);
+            }
         });
         whiteboard.addEventListener('touchmove', (e) => {
             e.preventDefault();
@@ -260,6 +403,7 @@
         whiteboard.addEventListener('touchend', stopDrawing);
 
         clearBtn.addEventListener('click', () => {
+            saveState();
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
         });
@@ -280,6 +424,14 @@
             });
         });
 
+        toolOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                currentTool = option.getAttribute('data-tool');
+                toolOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+            });
+        });
+
         darkModeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
         });
@@ -289,9 +441,28 @@
             brushSizeValue.textContent = currentBrushSize;
         });
 
-        // Initial setup
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
+        undoBtn.addEventListener('click', () => {
+            if (undoStack.length > 0) {
+                redoStack.push(whiteboard.toDataURL());
+                const previousState = undoStack.pop();
+                loadState(previousState);
+                updateUndoRedoButtons();
+            }
+        });
+
+        redoBtn.addEventListener('click', () => {
+            if (redoStack.length > 0) {
+                undoStack.push(whiteboard.toDataURL());
+                const nextState = redoStack.pop();
+                loadState(nextState);
+                updateUndoRedoButtons();
+            }
+        });
+
+        // Initialize
+        resizeCanvas();
+        saveState();
+        updateUndoRedoButtons();
     </script>
 </body>
 </html>
