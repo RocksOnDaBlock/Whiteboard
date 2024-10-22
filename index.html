@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Interactive Whiteboard</title>
+    <title>Interactive Whiteboard</title>
     <style>
         :root {
             --bg-color: #e0e5ec;
@@ -60,7 +60,7 @@
 
         .btn {
             padding: 10px 20px;
-            margin: 0 5px 10px;
+            margin: 0 10px 10px;
             border: none;
             border-radius: 50px;
             background-color: var(--bg-color);
@@ -123,21 +123,6 @@
             margin: 0 10px;
         }
 
-        .zoom-controls {
-            display: flex;
-            justify-content: center;
-            margin-top: 10px;
-        }
-
-        #textInput {
-            display: none;
-            position: absolute;
-            border: 1px solid var(--text-color);
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 5px;
-        }
-
         @media (max-width: 600px) {
             .container {
                 padding: 0 10px;
@@ -156,14 +141,14 @@
 
             .btn {
                 padding: 8px 16px;
-                margin: 0 3px 10px;
+                margin: 0 5px 10px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Enhanced Interactive Whiteboard</h1>
+        <h1>Interactive Whiteboard</h1>
         <div class="color-palette">
             <div class="color-option active" style="background-color: #000000;" data-color="#000000"></div>
             <div class="color-option" style="background-color: #ff0000;" data-color="#ff0000"></div>
@@ -178,27 +163,11 @@
         </div>
         <canvas id="whiteboard"></canvas>
         <div class="controls">
-            <button id="pencilBtn" class="btn">Pencil</button>
-            <button id="eraserBtn" class="btn">Eraser</button>
-            <button id="textBtn" class="btn">Text</button>
-            <button id="circleBtn" class="btn">Circle</button>
-            <button id="squareBtn" class="btn">Square</button>
-            <button id="lineBtn" class="btn">Line</button>
-            <button id="undoBtn" class="btn">Undo</button>
-            <button id="redoBtn" class="btn">Redo</button>
-            <button id="clearBtn" class="btn">Clear</button>
-            <button id="saveBtn" class="btn">Save</button>
-            <button id="gridToggleBtn" class="btn">Toggle Grid</button>
-            <button id="fullscreenBtn" class="btn">Fullscreen</button>
-        </div>
-        <div class="zoom-controls">
-            <button id="zoomInBtn" class="btn">Zoom In</button>
-            <button id="zoomOutBtn" class="btn">Zoom Out</button>
-            <button id="resetZoomBtn" class="btn">Reset Zoom</button>
+            <button id="clearBtn" class="btn">Clear Whiteboard</button>
+            <button id="saveBtn" class="btn">Save as Image</button>
         </div>
     </div>
     <button id="darkModeToggle" class="btn">Toggle Dark Mode</button>
-    <input type="text" id="textInput" placeholder="Enter text">
 
     <script>
         const whiteboard = document.getElementById('whiteboard');
@@ -209,33 +178,12 @@
         const darkModeToggle = document.getElementById('darkModeToggle');
         const brushSizeInput = document.getElementById('brushSize');
         const brushSizeValue = document.getElementById('brushSizeValue');
-        const pencilBtn = document.getElementById('pencilBtn');
-        const eraserBtn = document.getElementById('eraserBtn');
-        const textBtn = document.getElementById('textBtn');
-        const circleBtn = document.getElementById('circleBtn');
-        const squareBtn = document.getElementById('squareBtn');
-        const lineBtn = document.getElementById('lineBtn');
-        const undoBtn = document.getElementById('undoBtn');
-        const redoBtn = document.getElementById('redoBtn');
-        const gridToggleBtn = document.getElementById('gridToggleBtn');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
-        const zoomInBtn = document.getElementById('zoomInBtn');
-        const zoomOutBtn = document.getElementById('zoomOutBtn');
-        const resetZoomBtn = document.getElementById('resetZoomBtn');
-        const textInput = document.getElementById('textInput');
 
         let isDrawing = false;
         let currentColor = '#000000';
         let currentBrushSize = 2;
         let lastX = 0;
         let lastY = 0;
-        let currentTool = 'pencil';
-        let undoStack = [];
-        let redoStack = [];
-        let showGrid = false;
-        let zoomLevel = 1;
-        let panX = 0;
-        let panY = 0;
 
         function resizeCanvas() {
             const container = document.querySelector('.container');
@@ -245,21 +193,9 @@
             whiteboard.width = newWidth;
             whiteboard.height = newHeight;
 
-            redrawCanvas();
-        }
-
-        function redrawCanvas() {
+            // Redraw content after resizing
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
-
-            if (showGrid) {
-                drawGrid();
-            }
-
-            // Redraw content from undoStack
-            if (undoStack.length > 0) {
-                ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
-            }
         }
 
         window.addEventListener('resize', resizeCanvas);
@@ -268,7 +204,6 @@
         function startDrawing(e) {
             isDrawing = true;
             [lastX, lastY] = getCoordinates(e);
-            saveState();
         }
 
         function draw(e) {
@@ -278,41 +213,17 @@
 
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
-
-            if (currentTool === 'pencil' || currentTool === 'eraser') {
-                ctx.lineTo(x, y);
-                ctx.strokeStyle = currentTool === 'eraser' ? '#ffffff' : currentColor;
-                ctx.lineWidth = currentBrushSize;
-                ctx.lineCap = 'round';
-                ctx.stroke();
-            } else if (currentTool === 'circle') {
-                const radius = Math.sqrt(Math.pow(x - lastX, 2) + Math.pow(y - lastY, 2));
-                ctx.arc(lastX, lastY, radius, 0, 2 * Math.PI);
-                ctx.strokeStyle = currentColor;
-                ctx.lineWidth = currentBrushSize;
-                ctx.stroke();
-            } else if (currentTool === 'square') {
-                const width = x - lastX;
-                const height = y - lastY;
-                ctx.strokeStyle = currentColor;
-                ctx.lineWidth = currentBrushSize;
-                ctx.strokeRect(lastX, lastY, width, height);
-            } else if (currentTool === 'line') {
-                ctx.lineTo(x, y);
-                ctx.strokeStyle = currentColor;
-                ctx.lineWidth = currentBrushSize;
-                ctx.lineCap = 'round';
-                ctx.stroke();
-            }
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = currentBrushSize;
+            ctx.lineCap = 'round';
+            ctx.stroke();
 
             [lastX, lastY] = [x, y];
         }
 
         function stopDrawing() {
-            if (isDrawing) {
-                isDrawing = false;
-                saveState();
-            }
+            isDrawing = false;
         }
 
         function getCoordinates(e) {
@@ -322,88 +233,15 @@
 
             if (e.type.includes('touch')) {
                 return [
-                    (e.touches[0].clientX - rect.left) * scaleX / zoomLevel - panX,
-                    (e.touches[0].clientY - rect.top) * scaleY / zoomLevel - panY
+                    (e.touches[0].clientX - rect.left) * scaleX,
+                    (e.touches[0].clientY - rect.top) * scaleY
                 ];
             } else {
                 return [
-                    (e.clientX - rect.left) * scaleX / zoomLevel - panX,
-                    (e.clientY - rect.top) * scaleY / zoomLevel - panY
+                    (e.clientX - rect.left) * scaleX,
+                    (e.clientY - rect.top) * scaleY
                 ];
             }
-        }
-
-        function saveState() {
-            undoStack.push(ctx.getImageData(0, 0, whiteboard.width, whiteboard.height));
-            redoStack = [];
-        }
-
-        function undo() {
-            if (undoStack.length > 1) {
-                redoStack.push(undoStack.pop());
-                ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
-            }
-        }
-
-        function redo() {
-            if (redoStack.length > 0) {
-                undoStack.push(redoStack.pop());
-                ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
-            }
-        }
-
-        function drawGrid() {
-            ctx.save();
-            ctx.strokeStyle = '#cccccc';
-            ctx.lineWidth = 0.5;
-
-            for (let x = 0; x <= whiteboard.width; x += 20) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, whiteboard.height);
-                ctx.stroke();
-            }
-
-            for (let y = 0; y <= whiteboard.height; y += 20) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(whiteboard.width, y);
-                ctx.stroke();
-            }
-
-            ctx.restore();
-        }
-
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-        }
-
-        function zoomIn() {
-            zoomLevel *= 1.1;
-            applyZoom();
-        }
-
-        function zoomOut() {
-            zoomLevel /= 1.1;
-            applyZoom();
-        }
-
-        function resetZoom() {
-            zoomLevel = 1;
-            panX = 0;
-            panY = 0;
-            applyZoom();
-        }
-
-        function applyZoom() {
-            ctx.setTransform(zoomLevel, 0, 0, zoomLevel, panX, panY);
-            redrawCanvas();
         }
 
         whiteboard.addEventListener('mousedown', startDrawing);
@@ -424,7 +262,6 @@
         clearBtn.addEventListener('click', () => {
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
-            saveState();
         });
 
         saveBtn.addEventListener('click', () => {
@@ -440,7 +277,6 @@
                 currentColor = option.getAttribute('data-color');
                 colorOptions.forEach(opt => opt.classList.remove('active'));
                 option.classList.add('active');
-                currentTool = 'pencil';
             });
         });
 
@@ -453,59 +289,9 @@
             brushSizeValue.textContent = currentBrushSize;
         });
 
-        pencilBtn.addEventListener('click', () => currentTool = 'pencil');
-        eraserBtn.addEventListener('click', () => currentTool = 'eraser');
-        circleBtn.addEventListener('click', () => currentTool = 'circle');
-        squareBtn.addEventListener('click', () => currentTool = 'square');
-        lineBtn.addEventListener('click', () => currentTool = 'line');
-
-        undoBtn.addEventListener('click', undo);
-        redoBtn.addEventListener('click', redo);
-
-        gridToggleBtn.addEventListener('click', () => {
-            showGrid = !showGrid;
-            redrawCanvas();
-        });
-
-        fullscreenBtn.addEventListener('click', toggleFullscreen);
-
-        zoomInBtn.addEventListener('click', zoomIn);
-        zoomOutBtn.addEventListener('click', zoomOut);
-        resetZoomBtn.addEventListener('click', resetZoom);
-
-        textBtn.addEventListener('click', () => {
-            currentTool = 'text';
-            whiteboard.style.cursor = 'text';
-        });
-
-        whiteboard.addEventListener('click', (e) => {
-            if (currentTool === 'text') {
-                const [x, y] = getCoordinates(e);
-                textInput.style.left = `${e.clientX}px`;
-                textInput.style.top = `${e.clientY}px`;
-                textInput.style.display = 'block';
-                textInput.focus();
-            }
-        });
-
-        textInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const text = textInput.value;
-                const [x, y] = getCoordinates({
-                    clientX: parseInt(textInput.style.left),
-                    clientY: parseInt(textInput.style.top)
-                });
-                ctx.font = `${currentBrushSize * 2}px Arial`;
-                ctx.fillStyle = currentColor;
-                ctx.fillText(text, x, y);
-                textInput.style.display = 'none';
-                textInput.value = '';
-                saveState();
-            }
-        });
-
-        // Initialize
-        saveState();
+        // Initial setup
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
     </script>
 </body>
 </html>
