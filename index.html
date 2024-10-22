@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Whiteboard</title>
+    <style>
+        :root {
+            --bg-color: #e0e5ec;
+            --text-color: #333;
+            --shadow-color: #a3b1c6;
+            --highlight-color: #ffffff;
+        }
+
+        .dark-mode {
+            --bg-color: #2a2a2a;
+            --text-color: #e0e0e0;
+            --shadow-color: #1a1a1a;
+            --highlight-color: #3a3a3a;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        #whiteboard {
+            border-radius: 15px;
+            box-shadow: 8px 8px 15px var(--shadow-color), -8px -8px 15px var(--highlight-color);
+            cursor: crosshair;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            margin: 0 10px 10px;
+            border: none;
+            border-radius: 50px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 5px 5px 10px var(--shadow-color), -5px -5px 10px var(--highlight-color);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 7px 7px 12px var(--shadow-color), -7px -7px 12px var(--highlight-color);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: inset 3px 3px 5px var(--shadow-color), inset -3px -3px 5px var(--highlight-color);
+        }
+
+        .color-palette {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            box-shadow: 3px 3px 5px var(--shadow-color), -3px -3px 5px var(--highlight-color);
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.active {
+            transform: scale(1.2);
+            box-shadow: inset 2px 2px 3px var(--shadow-color), inset -2px -2px 3px var(--highlight-color);
+        }
+
+        #darkModeToggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        @media (max-width: 600px) {
+            #whiteboard {
+                width: 90vw;
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive Whiteboard</h1>
+        <div class="color-palette">
+            <div class="color-option active" style="background-color: #000000;" data-color="#000000"></div>
+            <div class="color-option" style="background-color: #ff0000;" data-color="#ff0000"></div>
+            <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
+            <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
+            <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
+        </div>
+        <canvas id="whiteboard" width="800" height="600"></canvas>
+        <div class="controls">
+            <button id="clearBtn" class="btn">Clear Whiteboard</button>
+            <button id="saveBtn" class="btn">Save as Image</button>
+        </div>
+    </div>
+    <button id="darkModeToggle" class="btn">Toggle Dark Mode</button>
+
+    <script>
+        const whiteboard = document.getElementById('whiteboard');
+        const ctx = whiteboard.getContext('2d');
+        const clearBtn = document.getElementById('clearBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const colorOptions = document.querySelectorAll('.color-option');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+
+        let isDrawing = false;
+        let currentColor = '#000000';
+
+        // Set initial background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
+
+        // Drawing functionality
+        whiteboard.addEventListener('mousedown', startDrawing);
+        whiteboard.addEventListener('mousemove', draw);
+        whiteboard.addEventListener('mouseup', stopDrawing);
+        whiteboard.addEventListener('mouseout', stopDrawing);
+
+        // Touch support
+        whiteboard.addEventListener('touchstart', handleTouch);
+        whiteboard.addEventListener('touchmove', handleTouch);
+        whiteboard.addEventListener('touchend', stopDrawing);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            const rect = whiteboard.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = currentColor;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.beginPath();
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            whiteboard.dispatchEvent(mouseEvent);
+        }
+
+        // Clear whiteboard
+        clearBtn.addEventListener('click', () => {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
+        });
+
+        // Save whiteboard as image
+        saveBtn.addEventListener('click', () => {
+            const image = whiteboard.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'whiteboard.png';
+            link.href = image;
+            link.click();
+        });
+
+        // Color palette
+        colorOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                currentColor = option.getAttribute('data-color');
+                colorOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+            });
+        });
+
+        // Dark mode toggle
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        // Responsive canvas size
+        function resizeCanvas() {
+            const container = document.querySelector('.container');
+            const newWidth = Math.min(800, container.clientWidth - 40);
+            const newHeight = (newWidth / 4) * 3;
+
+            whiteboard.width = newWidth;
+            whiteboard.height = newHeight;
+
+            // Redraw content after resizing
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, whiteboard.width, whiteboard.height);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+    </script>
+</body>
+</html>
