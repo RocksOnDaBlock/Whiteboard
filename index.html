@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Interactive Whiteboard</title>
+    <title>Whiteboard</title>
     <style>
         :root {
             --bg-color: #e0e5ec;
@@ -48,7 +48,7 @@
 
         #whiteboard {
             border-radius: 15px;
-            box-shadow: 8px 8px 15px var(--shadow-color), 
+            box-shadow: 8px 8px 15px var(--shadow-color),
                        -8px -8px 15px var(--highlight-color);
             cursor: crosshair;
             touch-action: none;
@@ -169,6 +169,7 @@
             width: 200px;
             height: 5px;
             -webkit-appearance: none;
+            appearance: none;
             background: var(--text-color);
             border-radius: 5px;
             outline: none;
@@ -229,7 +230,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Advanced Interactive Whiteboard</h1>
+        <h1>Whiteboard</h1>
         <div class="color-palette">
             <div class="color-option active" style="background-color: #000000;" data-color="#000000"></div>
             <div class="color-option" style="background-color: #ff0000;" data-color="#ff0000"></div>
@@ -238,7 +239,10 @@
             <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
             <div class="color-option" style="background-color: #ff69b4;" data-color="#ff69b4"></div>
             <div class="color-option" style="background-color: #800080;" data-color="#800080"></div>
-            <div class="color-option" style="background-color: #ffa500;" data-color="#ffa500"></div>
+            <div class="color-option" style="background-color: #00eeff;" data-color="#00eeff"></div>
+            <div class="color-option" style="background-color: #92434e;" data-color="#92434e"></div>
+            <div class="color-option" style="background-color: #585410;" data-color="#585410"></div>
+            <div class="color-option" style="background-color: #ffd7ae;" data-color="#ffd7ae"></div>
         </div>
         <div class="tools-container">
             <div class="tool-option active" data-tool="brush">Brush</div>
@@ -247,7 +251,7 @@
         </div>
         <div class="brush-size-container">
             <span>Brush Size:</span>
-            <input type="range" id="brushSize" min="1" max="50" value="2">
+            <input type="range" id="brushSize" min="1" max="100" value="2">
             <span id="brushSizeValue">2</span>
         </div>
         <canvas id="whiteboard"></canvas>
@@ -376,7 +380,7 @@
 
         // Event Listeners
         window.addEventListener('resize', resizeCanvas);
-        
+
         whiteboard.addEventListener('mousedown', (e) => {
             if (currentTool === 'fill') {
                 fill();
